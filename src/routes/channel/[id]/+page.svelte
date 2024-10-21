@@ -13,7 +13,6 @@
   import { onMount } from "svelte";
   import UserProfile from "$lib/components/unique/userProfile.svelte";
   import MessageInput from "./messageInput.svelte";
-  const messageRepository = repositoryFactory.get("message");
 
   onMount(async () => {
     console.log("/channel/[id] :: $page.params.id->", $page.params.id);

@@ -81,6 +81,7 @@ export const getChannelHistory = async (
 /**
  * 一番上までスクロールした時に、チャンネルメッセージを取得する
  */
+let isScrollLoading = false;
 export const scrollHandler = async () => {
   const MessageContainer = document.getElementById("messageContainer");
   // スクロールが一番上まで行ったかどうか
@@ -97,12 +98,20 @@ export const scrollHandler = async () => {
         get(channelHistoryStore).history[
           get(channelHistoryStore).history.length - 1
         ];
-      await getChannelHistory(targetMessage, "older");
+      if (isScrollLoading) return;
+      isScrollLoading = true;
+      await getChannelHistory(targetMessage, "older").then(() => {
+        isScrollLoading = false;
+      });
     }
 
     if (isBottom) {
       const targetMessage = get(channelHistoryStore).history[0];
-      await getChannelHistory(targetMessage, "newer");
+      if (isScrollLoading) return;
+      isScrollLoading = true;
+      await getChannelHistory(targetMessage, "newer").then(() => {
+        isScrollLoading = false;
+      });
     }
   }
 };
