@@ -53,16 +53,17 @@ export default {
     return await response.json();
   },
   changePassword: async (
-    username: string,
-    password: string,
+    currentPassword: string,
+    newPassword: string,
   ): Promise<IResponseUSerVerifyToken> => {
     const response = await fetch("/api/user/change-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ currentPassword, newPassword }),
     });
+    console.log(response);
     if (!response.ok)
-      throw new Error("userRepository :: changePassword :: エラー");
+      throw new Error(response.status.toString());
     return await response.json();
   },
   getUserInfo: async (userId: string): Promise<IResponseUserinfo> => {

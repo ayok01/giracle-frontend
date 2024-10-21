@@ -9,6 +9,8 @@
   import { changeThema } from "$lib/utils/thema";
   import { themaStore } from "$lib/store/thema";
   import { sineInOut } from "svelte/easing";
+  import { toastStore } from "$lib/store/toast";
+  import Password from "@tabler/icons-svelte/icons/password";
   const userRepository = repositoryFactory.get("user");
 
   let iconObj: File | null = null;
@@ -85,6 +87,56 @@
     "sunset",
   ];
 
+  let my_modal_5: HTMLDialogElement;
+
+  let incorrectCurrentPassword: boolean = false;
+  let isCorrectNewPassword: boolean = false;
+  let currentPassword: string = "";
+  let newPassword: string = "";
+  let newPasswordConfirm: string = "";
+  $: isCorrectNewPassword = newPassword == newPasswordConfirm;
+
+  const closePasswordModal = () => {
+    incorrectCurrentPassword = false;
+    newPassword = "";
+    newPasswordConfirm = "";
+    currentPassword = "";
+  };
+
+  const changePassword = async () => {
+    console.log("PasswordChanged");
+    await userRepository
+      .changePassword(currentPassword, newPassword)
+      .then((response) => {
+        console.log("パスワード変更成功", response);
+        my_modal_5.close();
+        toastStore.update((toast) => {
+          return [
+            ...toast,
+            {
+              message: "パスワードを変更しました。",
+              type: "success",
+            },
+          ];
+        });
+      })
+      .catch((response) => {
+        console.log("パスワード変更失敗", response);
+        //現在のパスワードが一致しているか
+        incorrectCurrentPassword = response.message == "401";
+
+        toastStore.update((toast) => {
+          return [
+            ...toast,
+            {
+              message: "パスワードの変更に失敗しました。",
+              type: "success",
+            },
+          ];
+        });
+      });
+  };
+
   let selectedLightTheme: Theme = $themaStore.lightTheme;
   let selectedDarkTheme: Theme = $themaStore.darkTheme;
 
@@ -160,6 +212,8 @@
     //編集用にユーザー情報を取得
     selfIntroduction = get(myUserStore).selfIntroduction;
     name = get(myUserStore).name;
+    //パスワード変更用のモーダルを取得
+    my_modal_5 = document.getElementById("my_modal_5") as HTMLDialogElement;
   });
 
   myUserStore.subscribe((value) => {
@@ -192,8 +246,102 @@
   };
 </script>
 
-<div>
-  <div class="w-full h-10 flex gap-2 items-center">
+<dialog
+  id="my_modal_5"
+  class="modal modal-bottom sm:modal-middle"
+  on:close={closePasswordModal}
+>
+  <div class="modal-box">
+    <h3 class="text-lg font-bold">パスワードの変更</h3>
+    <div class="flex flex-col gap-5 my-5">
+      <div class="flex flex-col gap-y-2">
+        {#if !incorrectCurrentPassword}
+          <p>現在のパスワード</p>
+        {:else}
+          <p class="text-error">
+            現在のパスワード - パスワードが間違っています！
+          </p>
+        {/if}
+        <label class="input input-bordered flex items-center gap-2">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 16 16"
+            fill="currentColor"
+            class="h-4 w-4 opacity-70"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M14 6a4 4 0 0 1-4.899 3.899l-1.955 1.955a.5.5 0 0 1-.353.146H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2.293a.5.5 0 0 1 .146-.353l3.955-3.955A4 4 0 1 1 14 6Zm-4-2a.75.75 0 0 0 0 1.5.5.5 0 0 1 .5.5.75.75 0 0 0 1.5 0 2 2 0 0 0-2-2Z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <input
+            id="currentPasswordField"
+            bind:value={currentPassword}
+            type="password"
+            class="grow"
+          />
+        </label>
+      </div>
+      <div class="flex flex-col gap-y-2">
+        <p>新しいパスワード</p>
+        <label class="input input-bordered flex items-center gap-2">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 16 16"
+            fill="currentColor"
+            class="h-4 w-4 opacity-70"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M14 6a4 4 0 0 1-4.899 3.899l-1.955 1.955a.5.5 0 0 1-.353.146H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2.293a.5.5 0 0 1 .146-.353l3.955-3.955A4 4 0 1 1 14 6Zm-4-2a.75.75 0 0 0 0 1.5.5.5 0 0 1 .5.5.75.75 0 0 0 1.5 0 2 2 0 0 0-2-2Z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <input bind:value={newPassword} type="password" class="grow" />
+        </label>
+      </div>
+      <div class="flex flex-col gap-y-2">
+        {#if (isCorrectNewPassword && newPassword.length > 0) || (newPassword.length == 0 && newPasswordConfirm.length == 0)}
+          <p>新しいパスワードを確認</p>
+        {:else}
+          <p class="text-error">
+            新しいパスワードを確認 - パスワードが一致しません！
+          </p>
+        {/if}
+        <label class="input input-bordered flex items-center gap-2">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 16 16"
+            fill="currentColor"
+            class="h-4 w-4 opacity-70"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M14 6a4 4 0 0 1-4.899 3.899l-1.955 1.955a.5.5 0 0 1-.353.146H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2.293a.5.5 0 0 1 .146-.353l3.955-3.955A4 4 0 1 1 14 6Zm-4-2a.75.75 0 0 0 0 1.5.5.5 0 0 1 .5.5.75.75 0 0 0 1.5 0 2 2 0 0 0-2-2Z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <input bind:value={newPasswordConfirm} type="password" class="grow" />
+        </label>
+      </div>
+    </div>
+    <div class="modal-action">
+      <form method="dialog">
+        <button class="btn">キャンセル</button>
+      </form>
+      <button
+        class="btn btn-primary {isCorrectNewPassword && newPassword.length > 0
+          ? ''
+          : 'btn-disabled'}"
+        on:click={changePassword}>完了</button
+      >
+    </div>
+  </div>
+</dialog>
+
+<div class="w-full">
+  <div class="h-10 flex gap-2 items-center">
     <button
       class="btn btn-ghost"
       on:click={() => {
@@ -204,9 +352,8 @@
     </button>
     <h1 class="text-2xl font-bold">ユーザー</h1>
   </div>
-
   <hr />
-  <div class="w-full my-14">
+  <div class="my-14">
     <div class="flex justify-center mx-auto gap-x-10 flex-wrap-reverse">
       <div class="flex flex-auto flex-col gap-y-5 my-5 max-w-[350px]">
         <p>名前</p>
@@ -233,6 +380,9 @@
             {/each}
           </div>
         </div>
+        <button class="btn btn-warning" on:click={() => my_modal_5.showModal()}>
+          パスワードを変更する</button
+        >
         <button
           on:click={async () => {
             await userRepository
@@ -298,7 +448,6 @@
           </div>
         </div>
       </div>
-
       <!--  Thema設定 -->
       <!--
       <div>
