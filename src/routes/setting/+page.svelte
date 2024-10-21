@@ -5,6 +5,7 @@
     IconCirclesRelation,
     IconMailFilled,
     IconServer,
+    IconHomeCog,
   } from "@tabler/icons-svelte";
 </script>
 
@@ -21,6 +22,17 @@
         <IconUser size={16} />
       </button>
       <div class="text-xs">プロフィール</div>
+    </div>
+    <div class=" flex flex-col">
+      <button
+        class="btn btn-ghost mx-auto btn-circle"
+        on:click={() => {
+          goto("/setting/client-setting");
+        }}
+      >
+        <IconHomeCog size={16} />
+      </button>
+      <div class="text-xs">クライアント設定</div>
     </div>
   </div>
 
